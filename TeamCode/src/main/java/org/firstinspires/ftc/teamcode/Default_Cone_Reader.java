@@ -29,10 +29,11 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+//import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import java.util.List;
@@ -71,10 +72,15 @@ public class Default_Cone_Reader extends LinearOpMode {
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
 
-   private ElapsedTime runtime = new ElapsedTime();
+    private ElapsedTime runtime = new ElapsedTime();
 
-    static final double     FORWARD_SPEED = 0.6;
-    static final double     TURN_SPEED    = 0.5;
+    static final double     COUNTS_PER_MOTOR_REV    = 28 ;    // eg: TETRIX Motor Encoder
+    static final double     DRIVE_GEAR_REDUCTION    = 20 ;     // No External Gearing.
+    static final double     WHEEL_DIAMETER_INCHES   = 2.95 ;     // For figuring circumference
+    static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+                                                      (WHEEL_DIAMETER_INCHES * 3.1415);
+    static final double     DRIVE_SPEED             = 0.5;
+    static final double     TURN_SPEED              = 0.5;
 
     private static final String[] LABELS = {
             "1 Bolt",
@@ -113,12 +119,12 @@ public class Default_Cone_Reader extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        leftFrontDrive  = hardwareMap.get(DcMotor.class, "leftFrontDrive");
-        leftBackDrive  = hardwareMap.get(DcMotor.class, "leftBackDrive");
-        rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFrontDrive");
-        rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
+        leftFrontDrive  = hardwareMap.get(DcMotor.class, "leftFront");
+        leftBackDrive  = hardwareMap.get(DcMotor.class, "leftBack");
+        rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFront");
+        rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack");
 
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
@@ -143,11 +149,34 @@ public class Default_Cone_Reader extends LinearOpMode {
             // (typically 16/9).
             tfod.setZoom(1.0, 16.0/9.0);
         }
-
+//changes
         /** Wait for the game to begin */
         telemetry.addData(">", "Press Play to start op mode");
         telemetry.update();
 
+        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
+
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        // Send telemetry message to indicate successful Encoder reset
+        telemetry.addData("Starting at",  "%7d :%7d",
+                leftFrontDrive.getCurrentPosition(),
+                leftBackDrive.getCurrentPosition(),
+                rightBackDrive.getCurrentPosition(),
+                rightFrontDrive.getCurrentPosition());
+
+        telemetry.update();
 
 
         waitForStart();
@@ -157,75 +186,23 @@ public class Default_Cone_Reader extends LinearOpMode {
                 String image = getConeImage();
                 if(image.equals(LABELS[0])){
 
-//                    leftFrontDrive.setPower(FORWARD_SPEED);
-//                    rightFrontDrive.setPower(FORWARD_SPEED);
-//                    leftBackDrive.setPower(FORWARD_SPEED);
-//                    rightBackDrive.setPower(FORWARD_SPEED);
+                    encoderDrive(DRIVE_SPEED,  12,  14, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
+                    encoderDrive(TURN_SPEED,   -12, 12, 4.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
 
-                    while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-                        telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
-                        telemetry.update();
-                    }
-
-//                    leftFrontDrive.setPower(-TURN_SPEED);
-//                    rightFrontDrive.setPower(TURN_SPEED);
-//                    leftBackDrive.setPower(-TURN_SPEED);
-//                    rightBackDrive.setPower(TURN_SPEED);
-
-                    while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-                        telemetry.addData("Path", "Leg2: %4.1f S Elapsed", runtime.seconds());
-                        telemetry.update ();
-                    }
 
                     telemetry.addData ("It would move forward", "1");
                 }
                 else if (image.equals(LABELS[1])){
                     //Do whatever you do for 2 Bulb
 
-//                    leftFrontDrive.setPower(FORWARD_SPEED);
-//                    rightFrontDrive.setPower(FORWARD_SPEED);
-//                    leftBackDrive.setPower(FORWARD_SPEED);
-//                    rightBackDrive.setPower(FORWARD_SPEED);
-
-                    while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-                        telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
-                        telemetry.update();
-                    }
-//
-//                    leftFrontDrive.setPower(-TURN_SPEED);
-//                    rightFrontDrive.setPower(TURN_SPEED);
-//                    leftBackDrive.setPower(-TURN_SPEED);
-//                    rightBackDrive.setPower(TURN_SPEED);
-//
-//                    while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-//                        telemetry.addData("Path", "Leg2: %4.1f S Elapsed", runtime.seconds());
-//                        telemetry.update ();
-//                    }
+                    encoderDrive(DRIVE_SPEED,  12,  14, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
 
                     telemetry.addData("It would move forward", "2");
                 }
                 else if(image.equals(LABELS[2])){
                     //Do whatever you do for 3 Panel
-
-//                    leftFrontDrive.setPower(FORWARD_SPEED);
-//                    rightFrontDrive.setPower(FORWARD_SPEED);
-//                    leftBackDrive.setPower(FORWARD_SPEED);
-//                    rightBackDrive.setPower(FORWARD_SPEED);
-
-                    while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-                        telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
-                        telemetry.update();
-                    }
-
-//                    leftFrontDrive.setPower(TURN_SPEED);
-//                    rightFrontDrive.setPower(-TURN_SPEED);
-//                    leftBackDrive.setPower(TURN_SPEED);
-//                    rightBackDrive.setPower(-TURN_SPEED);
-
-                    while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-                        telemetry.addData("Path", "Leg2: %4.1f S Elapsed", runtime.seconds());
-                        telemetry.update ();
-                    }
+                    encoderDrive(DRIVE_SPEED,  12,  14, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
+                    encoderDrive(TURN_SPEED,   12, -12, 4.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
 
                     telemetry.addData("It would move forward", "3");
                 }
@@ -289,7 +266,7 @@ public class Default_Cone_Reader extends LinearOpMode {
      */
     private void initTfod() {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-            "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
         tfodParameters.minResultConfidence = 0.75f;
         tfodParameters.isModelTensorFlow2 = true;
@@ -300,5 +277,72 @@ public class Default_Cone_Reader extends LinearOpMode {
         // Use loadModelFromFile() if you have downloaded a custom team model to the Robot Controller's FLASH.
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
         // tfod.loadModelFromFile(TFOD_MODEL_FILE, LABELS);
+    }
+    public void encoderDrive(double speed,
+                             double leftInches, double rightInches,
+                             double timeoutS) {
+        int newLeftFrontTarget;
+        int newLeftBackTarget;
+        int newRightFrontTarget;
+        int newRightBackTarget;
+
+        // Ensure that the opmode is still active
+        if (opModeIsActive()) {
+
+            // Determine new target position, and pass to motor controller
+            newLeftFrontTarget = leftFrontDrive.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
+            newLeftBackTarget = leftBackDrive.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
+            newRightFrontTarget = rightFrontDrive.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
+            newRightBackTarget = rightBackDrive.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
+
+            leftFrontDrive.setTargetPosition(newLeftFrontTarget);
+            leftBackDrive.setTargetPosition(newLeftBackTarget);
+            rightFrontDrive.setTargetPosition(newRightFrontTarget);
+            rightBackDrive.setTargetPosition(newRightBackTarget);
+
+            // Turn On RUN_TO_POSITION
+            leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // reset the timeout time and start motion.
+            runtime.reset();
+            leftFrontDrive.setPower(Math.abs(speed));
+            leftBackDrive.setPower(Math.abs(speed));
+            rightFrontDrive.setPower(Math.abs(speed));
+            rightBackDrive.setPower(Math.abs(speed));
+
+            // keep looping while we are still active, and there is time left, and both motors are running.
+            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
+            // its target position, the motion will stop.  This is "safer" in the event that the robot will
+            // always end the motion as soon as possible.
+            // However, if you require that BOTH motors have finished their moves before the robot continues
+            // onto the next step, use (isBusy() || isBusy()) in the loop test.
+            while (opModeIsActive() &&
+                    (runtime.seconds() < timeoutS) &&
+                    (leftFrontDrive.isBusy() && rightFrontDrive.isBusy() && leftBackDrive.isBusy() && rightBackDrive.isBusy())) {
+
+                // Display it for the driver.
+                telemetry.addData("Running to", " %7d :%7d", newLeftFrontTarget, newRightFrontTarget, newLeftBackTarget, newRightBackTarget);
+                telemetry.addData("Currently at", " at %7d :%7d",
+                        leftFrontDrive.getCurrentPosition(), rightFrontDrive.getCurrentPosition(), leftBackDrive.getCurrentPosition(), rightBackDrive.getCurrentPosition());
+                telemetry.update();
+            }
+
+            // Stop all motion;
+            leftFrontDrive.setPower(0);
+            rightFrontDrive.setPower(0);
+            leftBackDrive.setPower(0);
+            rightBackDrive.setPower(0);
+
+            // Turn off RUN_TO_POSITION
+            leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            sleep(250);   // optional pause after each move.
+        }
     }
 }
