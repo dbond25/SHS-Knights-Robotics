@@ -166,18 +166,18 @@ public class BasicOmniOpMode_Linear2 extends LinearOpMode {
 
             if (gamepad2.right_bumper)
             {
-                claw.setPosition(claw.getPosition()+0.0006);
+                claw.setPosition(.5);
             }
 
-            else if (gamepad2.left_bumper)
+            if (gamepad2.left_bumper)
             {
-                claw.setPosition(claw.getPosition()-0.0006);
+                claw.setPosition(.57);
             }
 
-            else
-            {
-                claw.setPosition(claw.getPosition());
-            }
+//            else
+//            {
+//                claw.setPosition(claw.getPosition());
+//            }
 
 
             // Send calculated power to wheels

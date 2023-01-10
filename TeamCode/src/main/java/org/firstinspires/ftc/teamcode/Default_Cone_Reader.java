@@ -34,6 +34,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import java.util.List;
@@ -71,6 +72,7 @@ public class Default_Cone_Reader extends LinearOpMode {
     private DcMotor leftBackDrive = null;
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
+    private DcMotor arm = null;
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -123,11 +125,13 @@ public class Default_Cone_Reader extends LinearOpMode {
         leftBackDrive  = hardwareMap.get(DcMotor.class, "leftBack");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFront");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack");
+        arm = hardwareMap.get(DcMotor.class, "linearSlide");
 
-        leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        arm.setDirection((DcMotor.Direction.FORWARD));
 
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
         // first.
@@ -154,20 +158,22 @@ public class Default_Cone_Reader extends LinearOpMode {
         telemetry.addData(">", "Press Play to start op mode");
         telemetry.update();
 
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
+//        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+//        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
+//        rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+//        rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
 
         leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Send telemetry message to indicate successful Encoder reset
         telemetry.addData("Starting at",  "%7d :%7d",
@@ -175,6 +181,7 @@ public class Default_Cone_Reader extends LinearOpMode {
                 leftBackDrive.getCurrentPosition(),
                 rightBackDrive.getCurrentPosition(),
                 rightFrontDrive.getCurrentPosition());
+                arm.getCurrentPosition();
 
         telemetry.update();
 
@@ -186,8 +193,8 @@ public class Default_Cone_Reader extends LinearOpMode {
                 String image = getConeImage();
                 if(image.equals(LABELS[0])){
 
-                    encoderDrive(DRIVE_SPEED,  12,  14, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
-                    encoderDrive(TURN_SPEED,   -12, 12, 4.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
+                    encoderDrive(DRIVE_SPEED,  12.0,  14.0, 0, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
+                    encoderDrive(TURN_SPEED,   -12.0, 12.0, 0, 0);  // S2: Turn Right 12 Inches with 4 Sec timeout
 
 
                     telemetry.addData ("It would move forward", "1");
@@ -195,19 +202,22 @@ public class Default_Cone_Reader extends LinearOpMode {
                 else if (image.equals(LABELS[1])){
                     //Do whatever you do for 2 Bulb
 
-                    encoderDrive(DRIVE_SPEED,  12,  14, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
+                    encoderDrive(DRIVE_SPEED,  12.0,  14.0, 0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
 
                     telemetry.addData("It would move forward", "2");
                 }
                 else if(image.equals(LABELS[2])){
                     //Do whatever you do for 3 Panel
-                    encoderDrive(DRIVE_SPEED,  12,  14, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
-                    encoderDrive(TURN_SPEED,   12, -12, 4.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
+                    encoderDrive(DRIVE_SPEED,  12.0,  14.0, 0, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
+                    encoderDrive(TURN_SPEED,   12.0, -12.0, 0, 0);  // S2: Turn Right 12 Inches with 4 Sec timeout
 
                     telemetry.addData("It would move forward", "3");
                 }
             }
         }
+    }
+
+    private void encoderDrive(double driveSpeed, int i, int i1, double v) {
     }
 
     private String getConeImage() {
@@ -279,12 +289,13 @@ public class Default_Cone_Reader extends LinearOpMode {
         // tfod.loadModelFromFile(TFOD_MODEL_FILE, LABELS);
     }
     public void encoderDrive(double speed,
-                             double leftInches, double rightInches,
+                             double leftInches, double rightInches, double armInches,
                              double timeoutS) {
         int newLeftFrontTarget;
         int newLeftBackTarget;
         int newRightFrontTarget;
         int newRightBackTarget;
+        int newArmTarget;
 
         // Ensure that the opmode is still active
         if (opModeIsActive()) {
@@ -294,17 +305,20 @@ public class Default_Cone_Reader extends LinearOpMode {
             newLeftBackTarget = leftBackDrive.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
             newRightFrontTarget = rightFrontDrive.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
             newRightBackTarget = rightBackDrive.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
+            newArmTarget = arm.getCurrentPosition() + (int) (armInches * COUNTS_PER_INCH);
 
             leftFrontDrive.setTargetPosition(newLeftFrontTarget);
             leftBackDrive.setTargetPosition(newLeftBackTarget);
             rightFrontDrive.setTargetPosition(newRightFrontTarget);
             rightBackDrive.setTargetPosition(newRightBackTarget);
+            arm.setTargetPosition(newArmTarget);
 
             // Turn On RUN_TO_POSITION
             leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             // reset the timeout time and start motion.
             runtime.reset();
@@ -312,6 +326,7 @@ public class Default_Cone_Reader extends LinearOpMode {
             leftBackDrive.setPower(Math.abs(speed));
             rightFrontDrive.setPower(Math.abs(speed));
             rightBackDrive.setPower(Math.abs(speed));
+            arm.setPower(Math.abs(speed));
 
             // keep looping while we are still active, and there is time left, and both motors are running.
             // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
@@ -328,6 +343,7 @@ public class Default_Cone_Reader extends LinearOpMode {
                 telemetry.addData("Currently at", " at %7d :%7d",
                         leftFrontDrive.getCurrentPosition(), rightFrontDrive.getCurrentPosition(), leftBackDrive.getCurrentPosition(), rightBackDrive.getCurrentPosition());
                 telemetry.update();
+                
             }
 
             // Stop all motion;
@@ -335,12 +351,14 @@ public class Default_Cone_Reader extends LinearOpMode {
             rightFrontDrive.setPower(0);
             leftBackDrive.setPower(0);
             rightBackDrive.setPower(0);
+            arm.setPower(0);
 
-            // Turn off RUN_TO_POSITION
-            leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            // Turn off RUN_TO_POSITION
+//            leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
             sleep(250);   // optional pause after each move.
         }
