@@ -54,7 +54,7 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
  * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
  * is explained below.
  */
-@Autonomous(name = "Concept: TensorFlow Object Detection Webcam", group = "Concept")
+@Autonomous(name = "Autonomous ", group = "Concept")
 //@Disabled
 public class Default_Cone_Reader extends LinearOpMode {
 
@@ -73,6 +73,7 @@ public class Default_Cone_Reader extends LinearOpMode {
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
     private DcMotor arm = null;
+    private Servo claw = null;
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -126,12 +127,14 @@ public class Default_Cone_Reader extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFront");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack");
         arm = hardwareMap.get(DcMotor.class, "linearSlide");
+        claw = hardwareMap.get(Servo.class, "claw");
 
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        arm.setDirection((DcMotor.Direction.FORWARD));
+        arm.setDirection(DcMotor.Direction.FORWARD);
+        claw.setDirection(Servo.Direction.FORWARD);
 
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
         // first.
@@ -330,7 +333,7 @@ public class Default_Cone_Reader extends LinearOpMode {
 
             // keep looping while we are still active, and there is time left, and both motors are running.
             // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
-            // its target position, the motion will stop.  This is "safer" in the event that the robot will
+            // its target position, the motion will stop.  This is "safer" in the event that the robot
             // always end the motion as soon as possible.
             // However, if you require that BOTH motors have finished their moves before the robot continues
             // onto the next step, use (isBusy() || isBusy()) in the loop test.
@@ -340,8 +343,7 @@ public class Default_Cone_Reader extends LinearOpMode {
 
                 // Display it for the driver.
                 telemetry.addData("Running to", " %7d :%7d", newLeftFrontTarget, newRightFrontTarget, newLeftBackTarget, newRightBackTarget);
-                telemetry.addData("Currently at", " at %7d :%7d",
-                        leftFrontDrive.getCurrentPosition(), rightFrontDrive.getCurrentPosition(), leftBackDrive.getCurrentPosition(), rightBackDrive.getCurrentPosition());
+                telemetry.addData("Currently at", " at %7d :%7d", leftFrontDrive.getCurrentPosition(), rightFrontDrive.getCurrentPosition(), leftBackDrive.getCurrentPosition(), rightBackDrive.getCurrentPosition());
                 telemetry.update();
                 
             }
