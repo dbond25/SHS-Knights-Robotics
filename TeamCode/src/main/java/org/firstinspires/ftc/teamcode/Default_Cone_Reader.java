@@ -29,11 +29,12 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+//import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import java.util.List;
@@ -53,7 +54,7 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
  * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
  * is explained below.
  */
-@Autonomous(name = "Concept: TensorFlow Object Detection Webcam", group = "Concept")
+@Autonomous(name = "Autonomous ", group = "Concept")
 //@Disabled
 public class Default_Cone_Reader extends LinearOpMode {
 
@@ -71,10 +72,18 @@ public class Default_Cone_Reader extends LinearOpMode {
     private DcMotor leftBackDrive = null;
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
+    private DcMotor arm = null;
+    private Servo claw = null;
 
     private ElapsedTime runtime = new ElapsedTime();
 
-//
+    static final double     COUNTS_PER_MOTOR_REV    = 28 ;    // eg: TETRIX Motor Encoder
+    static final double     DRIVE_GEAR_REDUCTION    = 20 ;     // No External Gearing.
+    static final double     WHEEL_DIAMETER_INCHES   = 2.95 ;     // For figuring circumference
+    static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+            (WHEEL_DIAMETER_INCHES * 3.1415);
+    static final double     DRIVE_SPEED             = 0.5;
+    static final double     TURN_SPEED              = 0.5;
 
     private static final String[] LABELS = {
             "1 Bolt",
@@ -109,19 +118,25 @@ public class Default_Cone_Reader extends LinearOpMode {
      * Detection engine.
      */
     private TFObjectDetector tfod;
+    private boolean alreadyRan = false;
 
     @Override
     public void runOpMode() {
-
+        alreadyRan = false;
         leftFrontDrive  = hardwareMap.get(DcMotor.class, "leftFront");
         leftBackDrive  = hardwareMap.get(DcMotor.class, "leftBack");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFront");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack");
+        arm = hardwareMap.get(DcMotor.class, "linearSlide");
+        claw = hardwareMap.get(Servo.class, "claw");
 
-        leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        arm.setDirection(DcMotor.Direction.FORWARD);
+//        claw.setDirection(Servo.Direction.FORWARD);
+
 
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
         // first.
@@ -148,125 +163,133 @@ public class Default_Cone_Reader extends LinearOpMode {
         telemetry.addData(">", "Press Play to start op mode");
         telemetry.update();
 
+//        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+//        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
+//        rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+//        rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
+
+//        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//
+//        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        // Send telemetry message to indicate successful Encoder reset
+        telemetry.addData("Starting at",  "%7d :%7d",
+                leftFrontDrive.getCurrentPosition(),
+                leftBackDrive.getCurrentPosition(),
+                rightBackDrive.getCurrentPosition(),
+                rightFrontDrive.getCurrentPosition());
+        arm.getCurrentPosition();
+
+        telemetry.update();
 
 
         waitForStart();
 
         if (opModeIsActive()) {
-            while (opModeIsActive()) {
-                String image = getConeImage();
-                if(image.equals(LABELS[0])){
 
-
-
-                    while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-                        telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
-                        telemetry.update();
-
-                        leftFrontDrive.setPower(1);
-                        rightFrontDrive.setPower(1);
-                        leftBackDrive.setPower(1);
-                        rightBackDrive.setPower(1);
-                    }
-
+            while (opModeIsActive() && !alreadyRan) {
+                String image = getConeImage(1000);
+                int zone = 2;
+//                if(image.equals(LABELS[0])){
 //
-//                    while (opModeIsActive() && (runtime.seconds() < 1)) {
-//                        telemetry.addData("Path", "Leg2: %4.1f S Elapsed", runtime.seconds());
-//                        telemetry.update ();
-//
-//                        leftFrontDrive.setPower(-0.2);
-//                        rightFrontDrive.setPower(0.2);
-//                        leftBackDrive.setPower(-0.2);
-//                        rightBackDrive.setPower(0.2);
-//                    }
+//                    zone = 1;
+//                }
+//                else if(image.equals(LABELS[1]))
+//                {
+//                    zone=2;
+//                }
+//                else if (image.equals(LABELS[2])) {
+//                    zone = 3;
+//                }
 
+                if(zone ==1){
+                    claw.setPosition (.57);
+                    encoderDrive(DRIVE_SPEED,  28.0,  28.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
+                    encoderDrive(TURN_SPEED,   -14.0, 14.0, 0);  // S2: Turn Right 12 Inches with 4 Sec timeout
+                    encoderDrive(DRIVE_SPEED,  22.0,  22.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
+                    encoderDrive(TURN_SPEED,   12.0, -12.0, 0);  // S2: Turn Right 12 Inches with 4 Sec timeout
+//                    encoderDrive(DRIVE_SPEED,  12.0,  12.0, 0, 7.0);  // S1: Forward 47 Inches with 5 Sec timeout
                     telemetry.addData ("It would move forward", "1");
                 }
-                else if (image.equals(LABELS[1])){
+                else if (zone==2){
                     //Do whatever you do for 2 Bulb
-
-                    leftFrontDrive.setPower(0.6);
-                    rightFrontDrive.setPower(0.6);
-                    leftBackDrive.setPower(0.6);
-                    rightBackDrive.setPower(0.6);
-
-                    while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-                        telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
-                        telemetry.update();
-                    }
-
-//                    leftFrontDrive.setPower(-0.5);
-//                    rightFrontDrive.setPower(0.5);
-//                    leftBackDrive.setPower(-0.5);
-//                    rightBackDrive.setPower(0.5);
-
-//                    while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-//                        telemetry.addData("Path", "Leg2: %4.1f S Elapsed", runtime.seconds());
-//                        telemetry.update ();
-//                    }
+                    encoderDrive(DRIVE_SPEED,  36,  36, 2);
+//                    encoderDrive(DRIVE_SPEED,  12.0,  12.0, 0, 10);  // S1: Forward 47 Inches with 5 Sec timeout
 
                     telemetry.addData("It would move forward", "2");
                 }
-                else if(image.equals(LABELS[2])){
+                else if(zone==3){
+                    encoderDrive(DRIVE_SPEED,  28.0,  28.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
+                    encoderDrive(TURN_SPEED,   12.0, -12.0, 0);  // S2: Turn Right 12 Inches with 4 Sec timeout
+                    encoderDrive(DRIVE_SPEED,  22.0,  22.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
+                    encoderDrive(TURN_SPEED,   -14.0, 14.0, 0);  // S2: Turn Right 12 Inches with 4 Sec timeout
+//                    encoderDrive(DRIVE_SPEED,  12.0,  12.0, 0, 7.0);  // S1: Forward 47 Inches with 5 Sec timeout
+                    telemetry.addData ("It would move forward", "3");
+
                     //Do whatever you do for 3 Panel
-
-                    leftFrontDrive.setPower(0.6);
-                    rightFrontDrive.setPower(0.6);
-                    leftBackDrive.setPower(0.6);
-                    rightBackDrive.setPower(0.6);
-
-                    while (opModeIsActive() && (runtime.seconds() < 3.0)) {
-                        telemetry.addData("Path", "Leg 1: %4.1f S Elapsed", runtime.seconds());
-                        telemetry.update();
-                    }
-
-                    leftFrontDrive.setPower(0.5);
-                    rightFrontDrive.setPower(-0.5);
-                    leftBackDrive.setPower(0.5);
-                    rightBackDrive.setPower(-0.5);
-
-                    while (opModeIsActive() && (runtime.seconds() < 1)) {
-                        telemetry.addData("Path", "Leg2: %4.1f S Elapsed", runtime.seconds());
-                        telemetry.update ();
-                    }
-                    telemetry.addData("It would move forward", "3");
+//                    encoderDrive(DRIVE_SPEED,  12.0,  12.0, 0, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
+//                    encoderDrive(TURN_SPEED,   12.0, -12.0, 0, 5.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
+//
+//                    telemetry.addData("It would move forward", "3");
                 }
+                telemetry.update();
+                alreadyRan=true;
             }
         }
     }
 
-    private String getConeImage() {
+//    private void encoderDrive(double driveSpeed, int i, int i1, double v) {
+//    }
+
+    private String getConeImage(int maxReads) {
         float currentConfidence = 0;
         String currentImage = "";
-        if (tfod != null) {
-            // getUpdatedRecognitions() will return null if no new information is available since
-            // the last time that call was made.
-            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-            if (updatedRecognitions != null) {
-                telemetry.addData("# Objects Detected", updatedRecognitions.size());
+        int currentReads = 0;
+//        while(currentReads < maxReads) {
+            if (tfod != null) {
+                // getUpdatedRecognitions() will return null if no new information is available since
+                // the last time that call was made.
+                List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+                if (updatedRecognitions != null) {
+                    telemetry.addData("# Objects Detected", updatedRecognitions.size());
 
 
-                // step through the list of recognitions and display image position/size information for each one
-                // Note: "Image number" refers to the randomized image orientation/number
-                for (Recognition recognition : updatedRecognitions) {
-                    double col = (recognition.getLeft() + recognition.getRight()) / 2 ;
-                    double row = (recognition.getTop()  + recognition.getBottom()) / 2 ;
-                    double width  = Math.abs(recognition.getRight() - recognition.getLeft()) ;
-                    double height = Math.abs(recognition.getTop()  - recognition.getBottom()) ;
+                    // step through the list of recognitions and display image position/size information for each one
+                    // Note: "Image number" refers to the randomized image orientation/number
+                    for (Recognition recognition : updatedRecognitions) {
+                        double col = (recognition.getLeft() + recognition.getRight()) / 2;
+                        double row = (recognition.getTop() + recognition.getBottom()) / 2;
+                        double width = Math.abs(recognition.getRight() - recognition.getLeft());
+                        double height = Math.abs(recognition.getTop() - recognition.getBottom());
 
-                    if(recognition.getConfidence()>currentConfidence)
-                    {
-                        currentImage = recognition.getLabel();
-                        currentConfidence=recognition.getConfidence();
+                        if (recognition.getConfidence() > currentConfidence) {
+                            currentImage = recognition.getLabel();
+                            currentConfidence = recognition.getConfidence();
+                        }
+                        telemetry.addData("", " ");
+                        telemetry.addData("Image", "%s (%.0f %% Conf.)", recognition.getLabel(), recognition.getConfidence() * 100);
+                        telemetry.addData("- Position (Row/Col)", "%.0f / %.0f", row, col);
+                        telemetry.addData("- Size (Width/Height)", "%.0f / %.0f", width, height);
                     }
-                    telemetry.addData(""," ");
-                    telemetry.addData("Image", "%s (%.0f %% Conf.)", recognition.getLabel(), recognition.getConfidence() * 100 );
-                    telemetry.addData("- Position (Row/Col)","%.0f / %.0f", row, col);
-                    telemetry.addData("- Size (Width/Height)","%.0f / %.0f", width, height);
+                    telemetry.update();
                 }
-                telemetry.update();
             }
-        }
+//            if(currentConfidence>80)
+//            {
+//                currentReads=11;
+//            }
+//            else {
+//                currentReads++;
+//            }
+//        }
         return currentImage;
     }
 
@@ -291,7 +314,7 @@ public class Default_Cone_Reader extends LinearOpMode {
      */
     private void initTfod() {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-            "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
         tfodParameters.minResultConfidence = 0.75f;
         tfodParameters.isModelTensorFlow2 = true;
@@ -302,5 +325,87 @@ public class Default_Cone_Reader extends LinearOpMode {
         // Use loadModelFromFile() if you have downloaded a custom team model to the Robot Controller's FLASH.
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
         // tfod.loadModelFromFile(TFOD_MODEL_FILE, LABELS);
+    }
+
+    public void encoderDrive(double speed,
+                             double leftInches, double rightInches, double armInches) {
+        int newLeftFrontTarget = 0;
+        int newLeftBackTarget;
+        int newRightFrontTarget = 0;
+        int newRightBackTarget;
+        int newArmTarget;
+
+        // Ensure that the opmode is still active
+        if (opModeIsActive()) {
+
+            // Determine new target position, and pass to motor controller
+            newLeftFrontTarget = leftFrontDrive.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
+            newLeftBackTarget = leftBackDrive.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
+            newRightFrontTarget = rightFrontDrive.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
+            newRightBackTarget = rightBackDrive.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
+            newArmTarget = arm.getCurrentPosition() + (int) (armInches);
+
+            leftFrontDrive.setTargetPosition(newLeftFrontTarget);
+            leftBackDrive.setTargetPosition(newLeftBackTarget);
+            rightFrontDrive.setTargetPosition(newRightFrontTarget);
+            rightBackDrive.setTargetPosition(newRightBackTarget);
+            arm.setTargetPosition(newArmTarget);
+
+            // Turn On RUN_TO_POSITION
+            leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // reset the timeout time and start motion.
+            runtime.reset();
+            if(leftInches==rightInches) {
+//                leftFrontDrive.setPower(Math.abs(speed));
+                leftBackDrive.setPower(Math.abs(speed));
+//                rightFrontDrive.setPower(Math.abs(speed * .8));
+                rightBackDrive.setPower(Math.abs(speed));
+            }else{
+                leftFrontDrive.setPower(Math.abs(speed));
+                leftBackDrive.setPower(Math.abs(speed));
+                rightFrontDrive.setPower(Math.abs(speed));
+                rightBackDrive.setPower(Math.abs(speed));
+            }
+            arm.setPower(Math.abs(speed));
+
+            // keep looping while we are still active, and there is time left, and both motors are running.
+            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
+            // its target position, the motion will stop.  This is "safer" in the event that the robot
+            // always end the motion as soon as possible.
+            // However, if you require that BOTH motors have finished their moves before the robot continues
+            // onto the next step, use (isBusy() || isBusy()) in the loop test.
+            while (opModeIsActive() &&
+//                    (runtime.seconds() < timeoutS) &&
+                    (leftFrontDrive.isBusy() && rightFrontDrive.isBusy() && leftBackDrive.isBusy() && rightBackDrive.isBusy() && arm.isBusy())) {
+
+                // Display it for the driver.
+                telemetry.addData("Running to", " %7d :%7d", newLeftFrontTarget, newRightFrontTarget);
+                telemetry.addData("Currently at", " at %7d :%7d", leftFrontDrive.getCurrentPosition(), rightFrontDrive.getCurrentPosition(), leftBackDrive.getCurrentPosition(), rightBackDrive.getCurrentPosition());
+                telemetry.update();
+
+            }
+
+            // Stop all motion;
+            leftFrontDrive.setPower(0);
+            rightFrontDrive.setPower(0);
+            leftBackDrive.setPower(0);
+            rightBackDrive.setPower(0);
+            arm.setPower(0);
+
+
+//            // Turn off RUN_TO_POSITION
+//            leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            sleep(250);   // optional pause after each move.
+        }
     }
 }
