@@ -197,40 +197,41 @@ public class Default_Cone_Reader extends LinearOpMode {
 
             while (opModeIsActive() && !alreadyRan) {
                 String image = getConeImage(1000);
-                int zone = 2;
-//                if(image.equals(LABELS[0])){
-//
-//                    zone = 1;
-//                }
-//                else if(image.equals(LABELS[1]))
-//                {
-//                    zone=2;
-//                }
-//                else if (image.equals(LABELS[2])) {
-//                    zone = 3;
-//                }
+                int zone = 0;
+                if(image.equals(LABELS[0]))
+                {
+                    zone = 1;
+                }
+                else if(image.equals(LABELS[1]))
+                {
+                    zone=2;
+                }
+                else if (image.equals(LABELS[2]))
+                {
+                    zone = 3;
+                }
 
                 if(zone ==1){
                     claw.setPosition (.57);
-                    encoderDrive(DRIVE_SPEED,  28.0,  28.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
-                    encoderDrive(TURN_SPEED,   -14.0, 14.0, 0);  // S2: Turn Right 12 Inches with 4 Sec timeout
-                    encoderDrive(DRIVE_SPEED,  22.0,  22.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
-                    encoderDrive(TURN_SPEED,   12.0, -12.0, 0);  // S2: Turn Right 12 Inches with 4 Sec timeout
+                    encoderDrive(DRIVE_SPEED,  28.0,  28.0, 0, 7);  // S1: Forward 47 Inches with 5 Sec timeout
+                    encoderDrive(TURN_SPEED,   -14.0, 14.0, 0, 7);  // S2: Turn Right 12 Inches with 4 Sec timeout
+                    encoderDrive(DRIVE_SPEED,  22.0,  22.0, 0, 7);  // S1: Forward 47 Inches with 5 Sec timeout
+                    encoderDrive(TURN_SPEED,   12.0, -12.0, 0, 7);  // S2: Turn Right 12 Inches with 4 Sec timeout
 //                    encoderDrive(DRIVE_SPEED,  12.0,  12.0, 0, 7.0);  // S1: Forward 47 Inches with 5 Sec timeout
                     telemetry.addData ("It would move forward", "1");
                 }
                 else if (zone==2){
                     //Do whatever you do for 2 Bulb
-                    encoderDrive(DRIVE_SPEED,  36,  36, 2);
+                    encoderDrive(DRIVE_SPEED,  36,  36, 0, 15);
 //                    encoderDrive(DRIVE_SPEED,  12.0,  12.0, 0, 10);  // S1: Forward 47 Inches with 5 Sec timeout
 
                     telemetry.addData("It would move forward", "2");
                 }
                 else if(zone==3){
-                    encoderDrive(DRIVE_SPEED,  28.0,  28.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
-                    encoderDrive(TURN_SPEED,   12.0, -12.0, 0);  // S2: Turn Right 12 Inches with 4 Sec timeout
-                    encoderDrive(DRIVE_SPEED,  22.0,  22.0, 0);  // S1: Forward 47 Inches with 5 Sec timeout
-                    encoderDrive(TURN_SPEED,   -14.0, 14.0, 0);  // S2: Turn Right 12 Inches with 4 Sec timeout
+                    encoderDrive(DRIVE_SPEED,  28.0,  28.0, 0, 7);  // S1: Forward 47 Inches with 5 Sec timeout
+                    encoderDrive(TURN_SPEED,   12.0, -12.0, 0, 7);  // S2: Turn Right 12 Inches with 4 Sec timeout
+                    encoderDrive(DRIVE_SPEED,  22.0,  22.0, 0, 7);  // S1: Forward 47 Inches with 5 Sec timeout
+                    encoderDrive(TURN_SPEED,   -14.0, 14.0, 0, 7);  // S2: Turn Right 12 Inches with 4 Sec timeout
 //                    encoderDrive(DRIVE_SPEED,  12.0,  12.0, 0, 7.0);  // S1: Forward 47 Inches with 5 Sec timeout
                     telemetry.addData ("It would move forward", "3");
 
@@ -246,6 +247,8 @@ public class Default_Cone_Reader extends LinearOpMode {
         }
     }
 
+
+
 //    private void encoderDrive(double driveSpeed, int i, int i1, double v) {
 //    }
 
@@ -253,43 +256,43 @@ public class Default_Cone_Reader extends LinearOpMode {
         float currentConfidence = 0;
         String currentImage = "";
         int currentReads = 0;
-//        while(currentReads < maxReads) {
-            if (tfod != null) {
-                // getUpdatedRecognitions() will return null if no new information is available since
-                // the last time that call was made.
-                List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-                if (updatedRecognitions != null) {
-                    telemetry.addData("# Objects Detected", updatedRecognitions.size());
+        while(currentReads < maxReads) {
+        if (tfod != null) {
+            // getUpdatedRecognitions() will return null if no new information is available since
+            // the last time that call was made.
+            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+            if (updatedRecognitions != null) {
+                telemetry.addData("# Objects Detected", updatedRecognitions.size());
 
 
-                    // step through the list of recognitions and display image position/size information for each one
-                    // Note: "Image number" refers to the randomized image orientation/number
-                    for (Recognition recognition : updatedRecognitions) {
-                        double col = (recognition.getLeft() + recognition.getRight()) / 2;
-                        double row = (recognition.getTop() + recognition.getBottom()) / 2;
-                        double width = Math.abs(recognition.getRight() - recognition.getLeft());
-                        double height = Math.abs(recognition.getTop() - recognition.getBottom());
+                // step through the list of recognitions and display image position/size information for each one
+                // Note: "Image number" refers to the randomized image orientation/number
+                for (Recognition recognition : updatedRecognitions) {
+                    double col = (recognition.getLeft() + recognition.getRight()) / 2;
+                    double row = (recognition.getTop() + recognition.getBottom()) / 2;
+                    double width = Math.abs(recognition.getRight() - recognition.getLeft());
+                    double height = Math.abs(recognition.getTop() - recognition.getBottom());
 
-                        if (recognition.getConfidence() > currentConfidence) {
-                            currentImage = recognition.getLabel();
-                            currentConfidence = recognition.getConfidence();
-                        }
-                        telemetry.addData("", " ");
-                        telemetry.addData("Image", "%s (%.0f %% Conf.)", recognition.getLabel(), recognition.getConfidence() * 100);
-                        telemetry.addData("- Position (Row/Col)", "%.0f / %.0f", row, col);
-                        telemetry.addData("- Size (Width/Height)", "%.0f / %.0f", width, height);
+                    if (recognition.getConfidence() > currentConfidence) {
+                        currentImage = recognition.getLabel();
+                        currentConfidence = recognition.getConfidence();
                     }
-                    telemetry.update();
+                    telemetry.addData("", " ");
+                    telemetry.addData("Image", "%s (%.0f %% Conf.)", recognition.getLabel(), recognition.getConfidence() * 100);
+                    telemetry.addData("- Position (Row/Col)", "%.0f / %.0f", row, col);
+                    telemetry.addData("- Size (Width/Height)", "%.0f / %.0f", width, height);
                 }
+                telemetry.update();
             }
+        }
 //            if(currentConfidence>80)
 //            {
-//                currentReads=11;
+//                currentReads=1000;
 //            }
 //            else {
 //                currentReads++;
 //            }
-//        }
+        }
         return currentImage;
     }
 
@@ -327,8 +330,8 @@ public class Default_Cone_Reader extends LinearOpMode {
         // tfod.loadModelFromFile(TFOD_MODEL_FILE, LABELS);
     }
 
-    public void encoderDrive(double speed,
-                             double leftInches, double rightInches, double armInches) {
+    private void encoderDrive (double speed,
+                             double leftInches, double rightInches, double armInches, double timeoutS) {
         int newLeftFrontTarget = 0;
         int newLeftBackTarget;
         int newRightFrontTarget = 0;
@@ -365,6 +368,7 @@ public class Default_Cone_Reader extends LinearOpMode {
                 leftBackDrive.setPower(Math.abs(speed));
 //                rightFrontDrive.setPower(Math.abs(speed * .8));
                 rightBackDrive.setPower(Math.abs(speed));
+
             }else{
                 leftFrontDrive.setPower(Math.abs(speed));
                 leftBackDrive.setPower(Math.abs(speed));
@@ -381,7 +385,7 @@ public class Default_Cone_Reader extends LinearOpMode {
             // onto the next step, use (isBusy() || isBusy()) in the loop test.
             while (opModeIsActive() &&
 //                    (runtime.seconds() < timeoutS) &&
-                    (leftFrontDrive.isBusy() && rightFrontDrive.isBusy() && leftBackDrive.isBusy() && rightBackDrive.isBusy() && arm.isBusy())) {
+                    (leftFrontDrive.isBusy() && rightFrontDrive.isBusy() && leftBackDrive.isBusy() && rightBackDrive.isBusy())) {
 
                 // Display it for the driver.
                 telemetry.addData("Running to", " %7d :%7d", newLeftFrontTarget, newRightFrontTarget);
