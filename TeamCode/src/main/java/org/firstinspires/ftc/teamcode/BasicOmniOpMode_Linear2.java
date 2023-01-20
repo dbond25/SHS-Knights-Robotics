@@ -184,11 +184,11 @@ public class BasicOmniOpMode_Linear2 extends LinearOpMode {
 
 
             if (gamepad2.right_bumper) {
-                claw.setPosition(.5);
+                claw.setPosition(.45);
             }
 
             if (gamepad2.left_bumper) {
-                claw.setPosition(.57);
+                claw.setPosition(.6);
             }
 
 //            else

@@ -65,7 +65,7 @@ public class Default_Cone_Reader extends LinearOpMode {
      * has been downloaded to the Robot Controller's SD FLASH memory, it must to be loaded using loadModelFromFile()
      * Here we assume it's an Asset.    Also see method initTfod() below .
      */
-    private static final String TFOD_MODEL_ASSET = "PowerPlay.tflite";
+    private static final String TFOD_MODEL_ASSET = "customSleeveTraining2.tflite";
     // private static final String TFOD_MODEL_FILE  = "/sdcard/FIRST/tflitemodels/CustomTeamModel.tflite";
 
     private DcMotor leftFrontDrive = null;
@@ -80,15 +80,18 @@ public class Default_Cone_Reader extends LinearOpMode {
     static final double     COUNTS_PER_MOTOR_REV    = 28 ;    // eg: TETRIX Motor Encoder
     static final double     DRIVE_GEAR_REDUCTION    = 20 ;     // No External Gearing.
     static final double     WHEEL_DIAMETER_INCHES   = 2.95 ;     // For figuring circumference
+    static final double     PULLEY_DIAMETER_INCHES = 1.5;
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
+    double     PULLEY_COUNTS_PER_MOVE = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+                        (PULLEY_DIAMETER_INCHES * 3.1415);
     static final double     DRIVE_SPEED             = 0.5;
     static final double     TURN_SPEED              = 0.5;
 
     private static final String[] LABELS = {
-            "1 Bolt",
-            "2 Bulb",
-            "3 Panel"
+            "Panel 1", //Panel 1 and adds
+            "Panel 2", // Panel 3
+            "Panel 3"
     };
 
     /*
@@ -190,17 +193,21 @@ public class Default_Cone_Reader extends LinearOpMode {
 
         telemetry.update();
 
+        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         waitForStart();
 
         if (opModeIsActive()) {
+            runtime.reset();
+            int zone = 0;
 
-            while (opModeIsActive() && !alreadyRan) {
+            while (opModeIsActive() && runtime.seconds() < 10 && !alreadyRan) {
                 String image = getConeImage(1000);
-                int zone = 0;
+
                 if(image.equals(LABELS[0]))
+//                if(image.equals(LABELS[0]) || image.equals(LABELS[1]))
                 {
-                    zone = 1;
+                    zone = 1; // Panel 1 or P
                 }
                 else if(image.equals(LABELS[1]))
                 {
@@ -213,25 +220,29 @@ public class Default_Cone_Reader extends LinearOpMode {
 
                 if(zone ==1){
                     claw.setPosition (.57);
-                    encoderDrive(DRIVE_SPEED,  28.0,  28.0, 0, 7);  // S1: Forward 47 Inches with 5 Sec timeout
-                    encoderDrive(TURN_SPEED,   -14.0, 14.0, 0, 7);  // S2: Turn Right 12 Inches with 4 Sec timeout
-                    encoderDrive(DRIVE_SPEED,  22.0,  22.0, 0, 7);  // S1: Forward 47 Inches with 5 Sec timeout
-                    encoderDrive(TURN_SPEED,   12.0, -12.0, 0, 7);  // S2: Turn Right 12 Inches with 4 Sec timeout
+                    driveForward (28, 0);  // S1: Forward 47 Inches with 5 Sec timeout
+                    turnLeft();  // S2: Turn Right 12 Inches with 4 Sec timeout
+                    driveForward (22, 0);  // S1: Forward 47 Inches with 5 Sec timeout
+                    turnRight();  // S2: Turn Right 12 Inches with 4 Sec timeout
 //                    encoderDrive(DRIVE_SPEED,  12.0,  12.0, 0, 7.0);  // S1: Forward 47 Inches with 5 Sec timeout
                     telemetry.addData ("It would move forward", "1");
+                    alreadyRan = true;
                 }
                 else if (zone==2){
                     //Do whatever you do for 2 Bulb
-                    encoderDrive(DRIVE_SPEED,  36,  36, 0, 15);
+                    claw.setPosition (.57);
+                    driveForward (36, 0);
 //                    encoderDrive(DRIVE_SPEED,  12.0,  12.0, 0, 10);  // S1: Forward 47 Inches with 5 Sec timeout
-
+                    arm.setPower (0);
                     telemetry.addData("It would move forward", "2");
+                    alreadyRan = true;
                 }
                 else if(zone==3){
-                    encoderDrive(DRIVE_SPEED,  28.0,  28.0, 0, 7);  // S1: Forward 47 Inches with 5 Sec timeout
-                    encoderDrive(TURN_SPEED,   12.0, -12.0, 0, 7);  // S2: Turn Right 12 Inches with 4 Sec timeout
-                    encoderDrive(DRIVE_SPEED,  22.0,  22.0, 0, 7);  // S1: Forward 47 Inches with 5 Sec timeout
-                    encoderDrive(TURN_SPEED,   -14.0, 14.0, 0, 7);  // S2: Turn Right 12 Inches with 4 Sec timeout
+                    claw.setPosition (.57);
+                    driveForward (28, 0);  // S1: Forward 47 Inches with 5 Sec timeout
+                    turnRight();  // S2: Turn Right 12 Inches with 4 Sec timeout
+                    driveForward (22, 0);  // S1: Forward 47 Inches with 5 Sec timeout
+                    turnLeft();  // S2: Turn Right 12 Inches with 4 Sec timeout
 //                    encoderDrive(DRIVE_SPEED,  12.0,  12.0, 0, 7.0);  // S1: Forward 47 Inches with 5 Sec timeout
                     telemetry.addData ("It would move forward", "3");
 
@@ -240,14 +251,28 @@ public class Default_Cone_Reader extends LinearOpMode {
 //                    encoderDrive(TURN_SPEED,   12.0, -12.0, 0, 5.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
 //
 //                    telemetry.addData("It would move forward", "3");
+                    alreadyRan = true;
                 }
                 telemetry.update();
-                alreadyRan=true;
+//                if (zone == 0)
+//                {
+//                    claw.setPosition (.57);
+//                    encoderDrive(DRIVE_SPEED,  36,  36, 0, 15);
+//                }
             }
         }
     }
 
 
+    private void driveForward (int inches, int armInches){
+        encoderDrive (DRIVE_SPEED, inches, inches, armInches, 0);
+    }
+    private void turnRight (){
+        encoderDrive (TURN_SPEED, 12, -12, 0, 0);
+    }
+    private void turnLeft (){
+        encoderDrive (TURN_SPEED, -14, 14, 0, 0);
+    }
 
 //    private void encoderDrive(double driveSpeed, int i, int i1, double v) {
 //    }
@@ -256,7 +281,7 @@ public class Default_Cone_Reader extends LinearOpMode {
         float currentConfidence = 0;
         String currentImage = "";
         int currentReads = 0;
-        while(currentReads < maxReads) {
+//        while(currentReads < maxReads) {
         if (tfod != null) {
             // getUpdatedRecognitions() will return null if no new information is available since
             // the last time that call was made.
@@ -292,7 +317,7 @@ public class Default_Cone_Reader extends LinearOpMode {
 //            else {
 //                currentReads++;
 //            }
-        }
+//        }
         return currentImage;
     }
 
@@ -338,16 +363,21 @@ public class Default_Cone_Reader extends LinearOpMode {
         int newRightBackTarget;
         int newArmTarget;
 
+
         // Ensure that the opmode is still active
         if (opModeIsActive()) {
+
+//            double     PULLEY_COUNTS_PER_MOVE = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+//                    (((Math.abs(armInches) + 2) / 2) * 3.1415);
+
+//            double     PULLEY_COUNTS_PER_MOVE = 60;
 
             // Determine new target position, and pass to motor controller
             newLeftFrontTarget = leftFrontDrive.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
             newLeftBackTarget = leftBackDrive.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
             newRightFrontTarget = rightFrontDrive.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
             newRightBackTarget = rightBackDrive.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
-            newArmTarget = arm.getCurrentPosition() + (int) (armInches);
-
+            newArmTarget = arm.getCurrentPosition() + (int) (((armInches/2) * PULLEY_COUNTS_PER_MOVE)/1.3);
             leftFrontDrive.setTargetPosition(newLeftFrontTarget);
             leftBackDrive.setTargetPosition(newLeftBackTarget);
             rightFrontDrive.setTargetPosition(newRightFrontTarget);
